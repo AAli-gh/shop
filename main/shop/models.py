@@ -17,7 +17,7 @@ password_validator = RegexValidator(
 
 
 
-class User(models.Model):
+class Profile(models.Model):
     username = models.CharField(max_length=200, null=False, unique=True , blank=False)
     email = models.EmailField(max_length=50, null=False, unique=True , blank=False)
     fullname = models.CharField(max_length=20, null=False , blank=False)
