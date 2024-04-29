@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,6 +42,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'shop',
     'rest_framework_simplejwt',
+    'django_otp.plugins.otp_email',
+    
 ]
 
 MIDDLEWARE = [
@@ -71,8 +75,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'main.wsgi.application'
+SECRET_KEY = 'django-insecure-s+cbp0(h3^=n2)n&h^_7+!xn1i@1s=e8#qs7oi#=y9c57t&84u'
 
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('JWT',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'USER_ID_FIELD': 'id',
 
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'aliemailsenderpy@gmail.com' # Your email address
+EMAIL_HOST_PASSWORD = 'pljjsmapojfrwaaz' # Your email password or App Password if you have enabled two factor authentication
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 

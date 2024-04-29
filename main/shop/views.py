@@ -11,6 +11,7 @@ from django.core.mail import send_mail
 from django.http import Http404
 import time
 import pytz
+import jwt
 from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import mixins, generics
@@ -72,10 +73,21 @@ class sign_up(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
             user.refresh_token = access_token
             user.save()
-
-            return Response({
-                "token": token,
-            })
+        
+            CONFIRMATION_URL = f'http://127.0.0.1:8000/shop/UserProfileAPIView={access_token}'
+            subject = 'Subject of the Email'
+            message = f"""welcome ({user.username})
+            Please click this link to confirm your account: {CONFIRMATION_URL} """
+            from_email = 'aliemailsenderpy@gmail.com' # Your email address
+            recipient_list = [user.email] # The list of recipient email addresses
+            send_mail(subject, message, from_email, recipient_list)
+            
+            return Response({"detail": f"Email sent for User {user.username}  confirm : {CONFIRMATION_URL} " ,
+                            'access': access_token,
+                            'expires_at': expiration_time_teheran,
+                                
+                        })
+        
         except APIException as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
@@ -119,3 +131,17 @@ class Login(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response({'error': 'Bad Request', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class UserProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = request.user.id
+        try:
+            user = User.objects.get(id=user_id)
+            user.is_confirmed = True  # Assuming is_confirmed is the field you want to update
+            user.save()
+            return Response({"detail": "Welcome, you are confirmed."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)

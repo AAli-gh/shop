@@ -14,4 +14,5 @@ router.register(r'view all',view_all,basename='view all')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('UserProfileAPIView/', UserProfileAPIView.as_view(), name='UserProfileAPIView'),
 ]
