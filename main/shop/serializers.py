@@ -46,7 +46,7 @@ class LoginSerializer(serializers.Serializer):
 
         user = authenticate(self.context['request'], username=username, password=password)
 
-        if user and user.is_active:
+        if user :
             data['user'] = user
             return data
         raise serializers.ValidationError("Incorrect username or password")
