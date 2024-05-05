@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'shop',
     'rest_framework_simplejwt',
     'django_otp.plugins.otp_email',
+    'django_filters',
     
 ]
 
@@ -73,6 +74,10 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
 
 WSGI_APPLICATION = 'main.wsgi.application'
 SECRET_KEY = 'django-insecure-s+cbp0(h3^=n2)n&h^_7+!xn1i@1s=e8#qs7oi#=y9c57t&84u'

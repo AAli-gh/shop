@@ -5,14 +5,19 @@ from .views import *
 router = routers.DefaultRouter()
 
 router.register(r'Creatuser', Creatuser,basename='Creatuser')
-router.register(r'Product', Product,basename='product')
+router.register(r'Product', Productview,basename='product')
 router.register(r'Brand', Brand,basename='Brand')
 router.register(r'Category',Category,basename= 'Category')
 router.register(r'sign_up', sign_up ,basename='sign_up')
 router.register(r'Login', Login ,basename='Login')
 router.register(r'view all',view_all,basename='view all')
+# router.register(r'ProductList',ProductListView,basename='ProductList')
 
 urlpatterns = [
     path('', include(router.urls)),
     path('UserProfileAPIView/', UserProfileAPIView.as_view(), name='UserProfileAPIView'),
+    path('ProductListView/', ProductListView.as_view(), name='ProductListView'),
+    path('ProductsearchView/', ProductsearchView.as_view(), name='ProductsearchView'),
+
+
 ]

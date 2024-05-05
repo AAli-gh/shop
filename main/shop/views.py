@@ -20,7 +20,9 @@ from datetime import datetime
 from django.db import IntegrityError
 from django.core.cache import cache
 from datetime import date
-
+from rest_framework import generics
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import ProductFilter
 
 class Creatuser(viewsets.ModelViewSet):
     # permission_classes = [IsAdminUser]
@@ -37,7 +39,7 @@ class Brand(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
 
-class Product(viewsets.ModelViewSet):
+class Productview(viewsets.ModelViewSet):
     # permission_classes = [IsAdminUser]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -145,3 +147,20 @@ class UserProfileAPIView(APIView):
             return Response({"detail": "Welcome, you are confirmed."}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+from rest_framework import filters
+
+class ProductsearchView(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description']
+
+
+
+class ProductListView(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProductFilter
