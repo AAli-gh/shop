@@ -23,6 +23,8 @@ from datetime import date
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
+from rest_framework import filters
+
 
 class Creatuser(viewsets.ModelViewSet):
     # permission_classes = [IsAdminUser]
@@ -40,9 +42,19 @@ class Brand(viewsets.ModelViewSet):
     serializer_class = BrandSerializer
 
 class Productview(viewsets.ModelViewSet):
-    # permission_classes = [IsAdminUser]
+    
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    
+class ProductImageCreate(generics.CreateAPIView):
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageSerializer
+
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs.get('product_id')
+        product = Product.objects.get(id=product_id)
+        serializer.save(product=product)
 
 
 class view_all(mixins.ListModelMixin, viewsets.GenericViewSet):   
@@ -149,7 +161,7 @@ class UserProfileAPIView(APIView):
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-from rest_framework import filters
+
 
 class ProductsearchView(generics.ListAPIView):
     queryset = Product.objects.all()
@@ -164,3 +176,16 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
+    
+class CartItemListView(generics.ListCreateAPIView):
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CartItemCreateSerializer
+        return CartItemSerializer
+
+class CartItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemCreateSerializer
