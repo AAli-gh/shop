@@ -179,12 +179,25 @@ class ProductListView(generics.ListAPIView):
     
 class CartItemListView(generics.ListCreateAPIView):
     queryset = CartItem.objects.all()
-    serializer_class = CartItemSerializer
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CartItemCreateSerializer
         return CartItemSerializer
+
+    def create(self, request, *args, **kwargs):
+        product_id = request.data.get('product')
+        quantity = request.data.get('quantity', 1)
+
+        # Check if the product already exists in the cart
+        try:
+            cart_item = CartItem.objects.get(product_id=product_id)
+            cart_item.quantity += int(quantity)
+            cart_item.save()
+            serializer = self.get_serializer(cart_item)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CartItem.DoesNotExist:
+            return super().create(request, *args, **kwargs)
 
 class CartItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CartItem.objects.all()
