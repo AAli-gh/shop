@@ -91,7 +91,7 @@ class sign_up(mixins.CreateModelMixin, viewsets.GenericViewSet):
             CONFIRMATION_URL = f'http://127.0.0.1:8000/shop/UserProfileAPIView={access_token}'
             subject = 'Subject of the Email'
             message = f"""welcome ({user.username})
-            Please click this link to confirm your account: {CONFIRMATION_URL} """
+            لطفا ایمیل خود را تایید کنید: {CONFIRMATION_URL} """
             from_email = 'aliemailsenderpy@gmail.com' # Your email address
             recipient_list = [user.email] # The list of recipient email addresses
             send_mail(subject, message, from_email, recipient_list)
@@ -99,7 +99,7 @@ class sign_up(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response({"detail": f"Email sent for User {user.username}  confirm : {CONFIRMATION_URL} " ,
                             'access': access_token,
                             'expires_at': expiration_time_teheran,
-                                
+                            
                         })
         
         except APIException as e:
@@ -112,13 +112,20 @@ class sign_up(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
 class Login(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = LoginSerializer
-    def create(self, request, *args, **kwargs):
-        try:
-            rate_limit_key = f'rate_limit:{request.data.get("username")}' 
-            request_count = cache.get(rate_limit_key, 0)
-            if request_count >= 5: 
-                return Response({'error': 'Too Many Requests'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
+    def create(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        rate_limit_key = f'rate_limit:{username}'
+        request_count = cache.get(rate_limit_key, 0)
+        
+        # Check if the user has exceeded the allowed login attempts
+        if request_count >= 5:
+            return Response({'error': 'Too Many Requests. Please try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        # Increment the request count
+        cache.set(rate_limit_key, request_count + 1, timeout=60 * 15)  # Lock out for 15 minutes
+        
+        try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']
@@ -127,24 +134,35 @@ class Login(mixins.CreateModelMixin, viewsets.GenericViewSet):
             expiration_timestamp = refresh.access_token['exp']
             tehran_timezone = pytz.timezone('Asia/Tehran')
             expiration_datetime_utc = datetime.utcfromtimestamp(expiration_timestamp)
-            expiration_datetime_teheran = expiration_datetime_utc.replace(tzinfo=pytz.utc).astimezone(tehran_timezone)
-            expiration_time_teheran = expiration_datetime_teheran.strftime('%H:%M:%S %Z')
+            expiration_datetime_tehran = expiration_datetime_utc.replace(tzinfo=pytz.utc).astimezone(tehran_timezone)
+            expiration_time_tehran = expiration_datetime_tehran.strftime('%H:%M:%S %Z')
 
-            
-            cache.set(rate_limit_key, request_count + 1, 160)  
+            access_token = str(refresh.access_token)
+            confirmation_url = f'http://127.0.0.1:8000/shop/UserProfileAPIView={access_token}'
+            subject = 'Subject of the Email'
+            message = f"""
+            خوش آمدید ({user.username}),
+            {confirmation_url}شما وارد سایت شدید 
+            """
+            from_email = 'aliemailsenderpy@gmail.com'  # Your email address
+            recipient_list = [user.email]  # The list of recipient email addresses
+            send_mail(subject, message, from_email, recipient_list)
+
+            # Reset the request count upon successful login
+            cache.delete(rate_limit_key)
 
             return Response({
-                'access': str(refresh.access_token),
-                'expires_at': expiration_time_teheran,
-            })
+                'access': access_token,
+                'expires_at': expiration_time_tehran,
+            }, status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
-            raise Http404("User profile not found")
+            return Response({'error': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
         except AuthenticationFailed:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except serializers.ValidationError as e:
             return Response({'error': 'Bad Request', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'An unexpected error occurred', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
 class UserProfileAPIView(APIView):
