@@ -45,7 +45,7 @@ class Productview(viewsets.ModelViewSet):
     
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    
+ 
 class ProductImageCreate(generics.CreateAPIView):
     queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer
